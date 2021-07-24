@@ -43,17 +43,42 @@ functions:
           private: true
           authorizer:
             type: COGNITO_USER_POOLS
-            authorizerId: !Ref MyAuthorizer
+            authorizerId: !Ref MyAuthorizer  
+  readonegame:
+      handler: games/readonegame.handler
+      events:
+        - http:
+            path: games/{id}
+            method: get
+            cors: true
+            private: true
+            authorizer:
+              type: COGNITO_USER_POOLS
+              authorizerId: !Ref MyAuthorizer
+  readsortbytitle:
+      handler: games/readsorted.handler
+      events:
+        - http:
+            path: sortedgames/{column}
+            method: get
+            cors: true
+            private: true
+            authorizer:
+              type: COGNITO_USER_POOLS
+              authorizerId: !Ref MyAuthorizer
+  create:
+    handler: games/create.handler
+    events:
       - http:
-          path: games/{id}
-          method: get
+          path: games
+          method: put
           cors: true
           private: true
           authorizer:
             type: COGNITO_USER_POOLS
             authorizerId: !Ref MyAuthorizer
-  create:
-    handler: games/create.handler
+  modify:
+    handler: games/modify.handler
     events:
       - http:
           path: games

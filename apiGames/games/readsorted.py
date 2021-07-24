@@ -5,8 +5,15 @@ def handler(event, context):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('GamesTable')
 
+    sortColumn = event['pathParameters']['column']
+    
     result = table.scan()
     items = result.get('Items', [])
+    
+    def getColumn(e):
+        return e[sortColumn]
+    items.sort(key=getColumn)
+    
     body = {
         'items': items
     }

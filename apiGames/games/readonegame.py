@@ -5,10 +5,14 @@ def handler(event, context):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('GamesTable')
 
-    result = table.scan()
-    items = result.get('Items', [])
+    id = event['pathParameters']['id']
+    key = {
+        'id': id
+    }
+    result = table.get_item(Key=key)
+    item = result.get('Item', {})
     body = {
-        'items': items
+        'item': item
     }
 
     response = {
