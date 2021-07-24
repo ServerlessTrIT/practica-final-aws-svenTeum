@@ -1,0 +1,39 @@
+Resources:
+  GamesCognitoPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: GamesCognitoPool-${self:provider.stage}
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          TemporaryPasswordValidityDays: 15
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      EmailVerificationMessage: 'Tu código de verificación es {####}'
+      EmailVerificationSubject: 'Tu código para Catálogo Juegos de Mesa'
+      MfaConfiguration: OFF
+      UserPoolTags:
+        Env: ${self:provider.stage}
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+        InviteMessageTemplate:
+          EmailMessage: 'Esta es tu contraseña para tu cuenta {username} en Catálogo Juegos de Mesa: {####}'
+          EmailSubject: 'Tu cuenta para Catálogo Juegos de Mesa'
+      UsernameConfiguration:
+        CaseSensitive: false
+    
+  GamesCognitoPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: GamesCognitoPoolClient-${self:provider.stage}
+      ExplicitAuthFlows:
+        - USER_PASSWORD_AUTH
+      RefreshTokenValidity: 30
+      UserPoolId:
+        Ref: GamesCognitoPool

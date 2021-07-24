@@ -1,0 +1,11 @@
+Resources:
+  MyAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      Name: MyAuthorizer-${self:provider.stage}
+      RestApiId:
+        Ref: ApiGatewayRestApi
+      Type: COGNITO_USER_POOLS
+      ProviderARNs:
+        - !GetAtt GamesCognitoPool.Arn
+      IdentitySource: method.request.header.Authorization

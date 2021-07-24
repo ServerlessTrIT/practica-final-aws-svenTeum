@@ -1,0 +1,105 @@
+service: apiGames
+
+provider:
+  name: aws
+  runtime: python3.8
+  lambdaHashingVersion: 20201221
+  stage: dev
+  region: eu-central-1
+  environment:
+    CLIENT_ID:
+      Ref: GamesCognitoPoolClient
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: !GetAtt GamesTable.Arn
+  endpointType: REGIONAL
+  apiName: apiGames-${self:provider.stage}
+  apiKeys:
+    - apiKeyGames-${self:provider.stage}
+  usagePlan:
+    quota:
+      limit: 1000
+      offset: 0
+      period: DAY
+    throttle:
+      burstLimit: 200
+      rateLimit: 100
+
+functions:
+  read:
+    handler: games/read.handler
+    events:
+      - http:
+          path: games
+          method: get
+          cors: true
+          private: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId: !Ref MyAuthorizer
+      - http:
+          path: games/{id}
+          method: get
+          cors: true
+          private: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId: !Ref MyAuthorizer
+  create:
+    handler: games/create.handler
+    events:
+      - http:
+          path: games
+          method: post
+          cors: true
+          private: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId: !Ref MyAuthorizer
+  delete:
+    handler: games/delete.handler
+    events:
+      - http:
+          path: games
+          method: delete
+          cors: true
+          private: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId: !Ref MyAuthorizer
+  login:
+    handler: users/login.handler
+    events:
+      - http:
+          path: login
+          method: post
+          cors: true
+          private: true
+  signup:
+    handler: users/signup.handler
+    events:
+      - http:
+          path: signup
+          method: post
+          cors: true
+          private: true
+  confirmsignup:
+    handler: users/confirmsignup.handler
+    events:
+      - http:
+          path: confirmsignup
+          method: post
+          cors: true
+          private: true
+
+resources:
+  - ${file(resources/apigateway_serverless.yml)}
+  - ${file(resources/cognito_serverless.yml)}
+  - ${file(resources/dynamodb_serverless.yml)}
