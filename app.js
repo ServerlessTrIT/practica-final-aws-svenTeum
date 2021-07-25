@@ -1,6 +1,10 @@
 var games = [];
 var orderColumn = "";
 var selectedId = 0;
+var search = 0;
+var searchIdString = "";
+var searchTitleString = "";
+var searchPlayersString = "";
 
 /***********************************
                API
@@ -15,6 +19,7 @@ const API_GAMES = API_URL+"games";
 const API_GAMES_BY_TITLE = API_URL+"sortedgames/title";
 const API_GAMES_BY_PLAYERS = API_URL+"sortedgames/players";
 const API_GAMES_BY_ID = API_URL+"sortedgames/id";
+const API_GAMES_SEARCH = API_URL+"searchgames";
 
 /* USERS */
 function signup(event){
@@ -96,37 +101,67 @@ function getGames(){
   console.log("getGames");
   //event.preventDefault();
   var getUrl = "";
-  if (orderColumn == "title")
+  if (search == "1")
   {
-    getUrl = API_GAMES_BY_TITLE;
+    $.ajax({
+      url: API_GAMES_SEARCH,
+      method: "POST",
+      headers:{
+        "x-api-key": API_KEY,
+        "Authorization":"Bearer "+localStorage.getItem('token')
+      },
+      // The following data has only effect if a search is performed
+      data: JSON.stringify({
+        "id": searchIdString,
+        "title": searchTitleString,
+        "players": searchPlayersString,
+        "ordercolumn":orderColumn
+      })
+    }).done(function(resp){
+      games=resp.items;
+      goTo("/games");
+    }).fail(function(error){
+      //console.log(JSON.stringify(error));
+      localStorage.removeItem('token');
+      goTo("/");
+    });
+    search = 0;
   }
-  else if (orderColumn == "players")
-  {
-    getUrl = API_GAMES_BY_PLAYERS;
-  }
-  else if (orderColumn == "id")
-  {
-    getUrl = API_GAMES_BY_ID;
-  }
-  else
-  {
-    getUrl = API_GAMES;
-  }
-  $.ajax({
-    url: getUrl,
-    method: "GET",
-    headers:{
-      "x-api-key": API_KEY,
-      "Authorization":"Bearer "+localStorage.getItem('token')
+  else {
+    if (orderColumn == "title")
+    {
+      getUrl = API_GAMES_BY_TITLE;
     }
-  }).done(function(resp){
-    games=resp.items;
-    goTo("/games");
-  }).fail(function(error){
-    //console.log(JSON.stringify(error));
-    localStorage.removeItem('token');
-    goTo("/");
-  });
+    else if (orderColumn == "players")
+    {
+      getUrl = API_GAMES_BY_PLAYERS;
+    }
+    else if (orderColumn == "id")
+    {
+      getUrl = API_GAMES_BY_ID;
+    }
+    else
+    {
+      getUrl = API_GAMES;
+    }
+    $.ajax({
+      url: getUrl,
+      method: "GET",
+      headers:{
+        "x-api-key": API_KEY,
+        "Authorization":"Bearer "+localStorage.getItem('token')
+      }
+    }).done(function(resp){
+      games=resp.items;
+      goTo("/games");
+    }).fail(function(error){
+      //console.log(JSON.stringify(error));
+      localStorage.removeItem('token');
+      goTo("/");
+    });
+  }
+  
+  
   
   return false;
 }
@@ -146,6 +181,16 @@ function sortByPlayers(){
 function sortById(){
   console.log("sortById")
   orderColumn = "id";
+  getGames();
+}
+
+function searchGame(event){
+  console.log('searchGame');
+  event.preventDefault();
+  search = 1;
+  searchIdString = $("input[id='searchid']").val();
+  searchTitleString = $("input[id='searchtitle']").val();
+  searchPlayersString = $("input[id='searchplayers']").val();
   getGames();
 }
 
@@ -275,13 +320,17 @@ function  modifyGamePage(){
   var id = games['id'];
   var title = games['title'];
   var players = games['players'];
-  content+='<form id="formGame"><input type="text" name="id" value="' + id + '" id="id" disabled><input type="text" name="title" id="title" value="' + title + '"><input type="text" name="players" id="players" value="' + players + '"><button type="submit" value="Enviar" id="btnModifyGame">Enviar</button></form>';
+  content+='<form id="formModifyGame"><input type="text" name="id" value="' + id + '" id="id" disabled><input type="text" name="title" id="title" value="' + title + '"><input type="text" name="players" id="players" value="' + players + '"><button type="submit" value="Enviar" id="btnModifyGame">Enviar</button></form>';
   return content;
 }
 
 function gamesPage(){
-  content='<h1>Juegos</h1><br/><button id="buttonSortByTitle">Ordenar por título</button><br/><br/><button id="buttonSortByPlayers">Ordenar por jugadores</button><br/><br/><button id="buttonSortById">Ordenar por ID</button><br/><br/><button id="linkNewGame">Nuevo juego</button><br/>';
-  content+='<table border="1"><tr><th>ID</th><th>Título</th><th>Mínimo jugadores</th><th>Modificar</th><th>Eliminar</th></tr>';
+  content='<h1>Juegos</h1>';
+  content+='<br/>Utilice los cuadros de búsqueda para filtrar la lista de juegos<br/>';
+  content+='<form id="formSearchGame"><input type="text" name="id" id="searchid" placeholder="ID"><input type="text" name="title" id="searchtitle" placeholder="Título"><input type="text" name="players" id="searchplayers" placeholder="Min. Jugadores"><button type="submit" value="Enviar" id="btnSearch">Buscar</button></form>';
+  content+='<br/><button id="linkNewGame">Añadir juego</button><br/>';
+  content+='Utilice los botones de flecha para ordenar la lista';
+  content+='<table border="1"><tr><th>ID <button id="buttonSortById">&#10515;</button></th><th>Título <button id="buttonSortByTitle">&#10515;</button></th><th>Mínimo jugadores <button id="buttonSortByPlayers">&#10515;</button></th><th>Modificar</th><th>Eliminar</th></tr>';
   for (i = 0; i< games.length; i++){
     content+='<tr><td>'+games[i].id+'</td><td>'+games[i].title+'</td><td>'+games[i].players+'</td><td><button id="modify_'+games[i].id+'">...</button></td><td><button id="id_'+games[i].id+'">X</button></td></tr>';
   }
@@ -380,5 +429,7 @@ function init(){
   $("body").on("click","button[id='buttonSortById']",sortById);
   $("body").on("click","form button[id='btnNewGame']",putGame);
   $("body").on("click","form button[id='btnModifyGame']",postGame);
+  $("body").on("click","form button[id='btnSearch']",searchGame);
+  
   renderApp();
 }
