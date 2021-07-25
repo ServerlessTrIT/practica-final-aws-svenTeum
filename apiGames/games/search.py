@@ -21,11 +21,11 @@ def handler(event, context):
     # Now filter the items
     if items:
         if search['id']:
-            items = [d for d in items if d['id'] == search['id']]
+            items = [d for d in items if search['id'].lower() in d['id'].lower()]
         if search['title']:
-            items = [d for d in items if d['title'] == search['title']]
+            items = [d for d in items if search['title'].lower() in d['title'].lower()]
         if search['players']:
-            items = [d for d in items if d['players'] == search['players']]
+            items = [d for d in items if search['players'].lower() in d['players'].lower()]
         if search['ordercolumn']:
             def getColumn(e):
                 return e[search['ordercolumn']]
